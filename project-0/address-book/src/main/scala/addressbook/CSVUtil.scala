@@ -5,7 +5,7 @@ import org.mongodb.scala.bson.ObjectId
 
 object CSVUtil {
   def parseCSVToMongo(fileName: String, dropHeaders: Boolean): Unit = {
-    println(s"Parsing ${fileName}")
+    println(s"Attempting to open ${fileName}")
 
 //    val client = MongoClient()
 //
@@ -16,6 +16,8 @@ object CSVUtil {
     if (dropHeaders == true) headers += 1 else  0
 
     val source = io.Source.fromFile(fileName)
+
+    println(s"Success. Parsing ${fileName}")
 
     try {
       for(item <- source.getLines().drop(headers)) {
