@@ -2,7 +2,9 @@ package addressbook
 
 import java.io.FileNotFoundException
 
+import addressbook.DbUtil.printResult
 import org.bson.types.ObjectId
+import org.mongodb.scala.model.Filters.equal
 
 import scala.io.StdIn
 import scala.util.matching.Regex
@@ -22,7 +24,8 @@ object Cli {
     println("* 1. Import CSV                *")
     println("* 2. Input Contact             *")
     println("* 3. Delete Contact            *")
-    println("* 4. Search for Contact        *")
+    println("* 4. Edit Contact              *")
+    println("* 5. Search for Contact        *")
     println("* Exit                         *")
     println("********************************")
   }
@@ -32,26 +35,47 @@ object Cli {
     println("Input Contact")
 
     val cellPhoneRegex = "^[1-9]\\d{2}-\\d{3}-\\d{4}"
+    val nameRegex = "([A-Za-b][a-zA-Z]*)"
+    val emailRegex = "(\\w+)@([\\w\\.]+)"
 
     // TODO: Loop on firstName/lastName or it inputs blank
+    var firstName : String = null
+    do {
+      var input = StdIn.readLine("First Name: ")
+      input match {
+        case input if input.matches(nameRegex) => firstName = input
+        case _ => println("Invalid First Name - Try Again")
+      }
+    } while (firstName == null)
 
-    val firstName : String = StdIn.readLine("First Name: ")
-
-    val lastName : String = StdIn.readLine("Last Name: ")
+    var lastName : String = null
+    do {
+      val input = StdIn.readLine("Last Name: ")
+      input match {
+        case input if input.matches(nameRegex) => lastName = input
+        case _ => println("Invalid Last Name - Try Again")
+      }
+    } while (lastName == null)
 
     var cellPhone : String = null
-    var cellLoop = true
     do {
-      cellPhone = StdIn.readLine("Cell Number: ")
-      if (cellPhone.matches(cellPhoneRegex)) cellLoop = false else println("Invalid Phone Number Format - Try Again")
-    } while(cellLoop)
+      val input = StdIn.readLine("Cell Number: ")
+      input match {
+        case input if (input.matches(cellPhoneRegex)) => cellPhone = input
+        case _ => println("Invalid Number - Use Format (XXX-XXX-XXXX)")
+      }
+      //if (cellPhone.matches(cellPhoneRegex)) cellLoop = false else println("Invalid Number - Use Format (XXX-XXX-XXXX)")
+    } while(cellPhone == null)
 
     var email : String = null
-    var emailLoop = true
     do {
-      email = StdIn.readLine("Email: ")
-      if (email.matches("""(\w+)@([\w\.]+)""")) emailLoop = false else println("Invalid Email Format - Try Again")
-    } while (emailLoop)
+      val input = StdIn.readLine("Email: ")
+      input match {
+        case input if (input.matches(emailRegex)) => email = input
+        case _ =>println("Invalid Email - Try Again")
+      }
+      //if (email.matches("""(\w+)@([\w\.]+)""")) emailLoop = false else println("Invalid Email - Try Again")
+    } while (email == null)
 
     val address : Option[String] = StdIn.readLine("Address: ") match {
       case "" => None
@@ -65,18 +89,18 @@ object Cli {
 
     var state : Option[String] = null
     do {
-      val newState = StdIn.readLine("State: ")
-      newState match {
+      val input = StdIn.readLine("State: ")
+      input match {
         case newState if (newState.matches("""[A-Z][A-Z]""")) => state = Option(newState)
         case "" => state = None
-        case _ => state = null; println("Invalid State - Use XX Format")
+        case _ => state = null; println("Invalid State - Use Format (XX)")
       }
     } while (state == null)
 
     var zip : Option[Int] = null
     do {
-      val newZip : String = StdIn.readLine("Zip: ")
-      newZip match {
+      val input : String = StdIn.readLine("Zip: ")
+      input match {
         case newZip if (newZip.matches("""[0-9]{5}""")) => zip = Option(newZip.toInt)
         case "" => zip = None
         case _ => zip = null; println("Invalid Zip - Must Be 5 Digits")
@@ -112,7 +136,7 @@ object Cli {
     val firstName : String = StdIn.readLine("First Name: ")
     val lastName : String = StdIn.readLine("Last Name: ")
 
-    DbUtil.searchForContact(firstName, lastName)
+    DbUtil.printContactsByFullName(firstName, lastName)
   }
 
   def deleteContact() : Unit = {
@@ -121,7 +145,24 @@ object Cli {
     val firstName : String = StdIn.readLine("First Name: ")
     val lastName : String = StdIn.readLine("Last Name: ")
 
-    DbUtil.deleteContact(firstName, lastName)
+    DbUtil.printContactsByFullName(firstName, lastName)
+    var selectedContact : Int = 0
+    try{
+      selectedContact = StdIn.readLine("Enter Result # to Delete Contact: ").toInt - 1
+      DbUtil.deleteContactByFullName(firstName, lastName, selectedContact)
+    } catch {
+      case numFormat : NumberFormatException => println("Invalid Contact")
+    }
+
+  }
+
+  def editContact(): Unit = {
+    println("********************************")
+    println("Edit Contact")
+    val firstName : String = StdIn.readLine("First Name: ")
+    val lastName : String = StdIn.readLine("Last Name: ")
+
+    DbUtil.updateContactByFullName(firstName, lastName)
   }
 
   def menu() : Unit = {
@@ -132,10 +173,11 @@ object Cli {
       printOption()
 
       StdIn.readLine("Enter Command: ") match {
-        case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("1") => importCSV()
+        case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("1") || cmd.equalsIgnoreCase("import csv") => importCSV()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("2") => inputSingleContact()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("3") => deleteContact()
-        case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("4") => printContact()
+        case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("4") => editContact()
+        case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("5") => printContact()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("exit") => continueMenuLoop = false; println("Shutting Down....")
         case notRecognized => println(s"${notRecognized} not a recognized command")
       }
