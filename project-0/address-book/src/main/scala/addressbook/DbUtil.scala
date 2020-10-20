@@ -124,44 +124,137 @@ object DbUtil {
     printResult(this.getContactCollection().updateOne(equal("_id", contactId), set("firstName", newFirstName)))
   }
 
-  def updateLastName(contactId : ObjectId): Unit = ???
+  def updateLastName(contactId : ObjectId): Unit = {
+    val nameRegex = "([A-Za-b][a-zA-Z]*)"
 
-  def updatePhoneNumber(contactId : ObjectId): Unit = ???
+    println("Update Last Name")
 
-  def updateEmail(contactId : ObjectId): Unit = ???
+    var newLastName : String = null
+    do {
+      val input = StdIn.readLine("New Last Name: ")
+      input match {
+        case input if input.matches(nameRegex) => newLastName = input
+        case _ => println("Invalid Last Name - Try Again")
+      }
+    } while (newLastName == null)
 
-  def updateAddress(contactId : ObjectId): Unit = ???
+    printResult(this.getContactCollection().updateOne(equal("_id", contactId), set("lastName", newLastName)))
+  }
 
-  //def getResultSetByName(firstName : String, lastName : String) : ???
+  def updatePhoneNumber(contactId : ObjectId): Unit = {
+    val phoneNumberRegex = "^[1-9]\\d{2}-\\d{3}-\\d{4}"
+
+    println("Update Phone Number")
+
+    var newPhoneNumber : String = null
+    do {
+      val input = StdIn.readLine("New Phone Number: ")
+      input match {
+        case input if (input.matches(phoneNumberRegex)) => newPhoneNumber = input
+        case _ => println("Invalid Number - Use Format (XXX-XXX-XXXX)")
+      }
+    } while (newPhoneNumber == null)
+
+    printResult(this.getContactCollection().updateOne(equal("_id", contactId), set("cellNumber", newPhoneNumber)))
+  }
+
+  def updateEmail(contactId : ObjectId): Unit = {
+    val emailRegex = "(\\w+)@([\\w\\.]+)"
+
+    println("Update Email")
+
+    var newEmail : String = null
+    do {
+      val input = StdIn.readLine("New Email: ")
+      input match {
+        case input if (input.matches(emailRegex)) => newEmail = input
+        case _ =>println("Invalid Email - Try Again")
+      }
+    } while (newEmail == null)
+
+    printResult(this.getContactCollection().updateOne(equal("_id", contactId), set("email", newEmail)))
+  }
+
+  def updateAddress(contactId : ObjectId): Unit = {
+    val newAddress : Option[String] = StdIn.readLine("Address: ") match {
+      case "" => None
+      case address : String  => Option(address)
+    }
+
+    val newCity : Option[String] = StdIn.readLine("City: ") match {
+      case "" => None
+      case city : String => Option(city)
+    }
+
+    var newState : Option[String] = null
+    do {
+      val input = StdIn.readLine("State: ")
+      input match {
+        case input if (input.matches("""[A-Z][A-Z]""")) => newState = Option(input)
+        case "" => newState = None
+        case _ => newState = null; println("Invalid State - Use Format (XX)")
+      }
+    } while (newState == null)
+
+    var newZip : Option[Int] = null
+    do {
+      val input : String = StdIn.readLine("Zip: ")
+      input match {
+        case input if (input.matches("""[0-9]{5}""")) => newZip = Option(input.toInt)
+        case "" => newZip = None
+        case _ => newZip = null; println("Invalid Zip - Must Be 5 Digits")
+      }
+    } while (newZip == null)
+
+
+    // TODO: Move these updateOne's to an updateMany
+    printResult(this.getContactCollection().updateOne(
+      equal("_id", contactId), set("address", newAddress)
+    ))
+
+    printResult(this.getContactCollection().updateOne(
+      equal("_id", contactId), set("city", newCity),
+    ))
+
+    printResult(this.getContactCollection().updateOne(
+      equal("_id", contactId), set("state", newState),
+    ))
+
+    printResult(this.getContactCollection().updateOne(
+      equal("_id", contactId), set("zip", newZip)
+    ))
+  }
 
   def updateContactByFullName(firstName: String, lastName: String) : Unit = {
     val resultSet = this.getContactResultSet(firstName, lastName)
 
-    this.printContactsByFullName(firstName, lastName)
+    if (resultSet.isEmpty) {
+      println("No Contacts Found")
+    } else {
+      this.printContactsByFullName(firstName, lastName)
 
+      val selectedContact : Int = StdIn.readLine("Enter Result # to Edit Contact: ").toInt - 1
 
-    //contactIndex
-    val selectedContact : Int = StdIn.readLine("Enter Result # to Edit Contact: ").toInt - 1
+      val contactId : ObjectId = resultSet(selectedContact)._id
 
-    val contactId : ObjectId = resultSet(selectedContact)._id
+      println("********************************")
+      println("* 1. Update First Name         *")
+      println("* 2. Update Last Name          *")
+      println("* 3. Update Phone Number       *")
+      println("* 4. Update Email              *")
+      println("* 5. Update Address            *")
+      println("********************************")
 
-    println("********************************")
-    println("* 1. Update First Name         *")
-    println("* 2. Update Last Name          *")
-    println("* 3. Update Phone Number       *")
-    println("* 4. Update Email              *")
-    println("* 5. Update Address            *")
-    println("********************************")
+      val selectedOption : Int = StdIn.readLine("Select Option: ").toInt
+      println("********************************")
 
-    val selectedOption : Int = StdIn.readLine("Select Option: ").toInt
-    println("********************************")
-
-    selectedOption match {
-      case selectedOption if (selectedOption == 1) => updateFirstName(contactId)
-      case selectedOption if (selectedOption == 2) => updateLastName(contactId)
-      case selectedOption if (selectedOption == 3) => updatePhoneNumber(contactId)
-      case selectedOption if (selectedOption == 4) => updateEmail(contactId)
-      case selectedOption if (selectedOption == 5) => updateAddress(contactId)
+      selectedOption match {
+        case selectedOption if (selectedOption == 1) => updateFirstName(contactId)
+        case selectedOption if (selectedOption == 2) => updateLastName(contactId)
+        case selectedOption if (selectedOption == 3) => updatePhoneNumber(contactId)
+        case selectedOption if (selectedOption == 4) => updateEmail(contactId)
+        case selectedOption if (selectedOption == 5) => updateAddress(contactId)
+      }
     }
 
   }

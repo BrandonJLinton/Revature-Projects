@@ -59,12 +59,11 @@ object Cli {
 
     var cellPhone : String = null
     do {
-      val input = StdIn.readLine("Cell Number: ")
+      val input = StdIn.readLine("Phone Number: ")
       input match {
         case input if (input.matches(cellPhoneRegex)) => cellPhone = input
         case _ => println("Invalid Number - Use Format (XXX-XXX-XXXX)")
       }
-      //if (cellPhone.matches(cellPhoneRegex)) cellLoop = false else println("Invalid Number - Use Format (XXX-XXX-XXXX)")
     } while(cellPhone == null)
 
     var email : String = null
@@ -74,7 +73,6 @@ object Cli {
         case input if (input.matches(emailRegex)) => email = input
         case _ =>println("Invalid Email - Try Again")
       }
-      //if (email.matches("""(\w+)@([\w\.]+)""")) emailLoop = false else println("Invalid Email - Try Again")
     } while (email == null)
 
     val address : Option[String] = StdIn.readLine("Address: ") match {
@@ -173,7 +171,7 @@ object Cli {
       printOption()
 
       StdIn.readLine("Enter Command: ") match {
-        case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("1") || cmd.equalsIgnoreCase("import csv") => importCSV()
+        case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("1") => importCSV()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("2") => inputSingleContact()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("3") => deleteContact()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("4") => editContact()
