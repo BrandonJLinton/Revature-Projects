@@ -17,7 +17,7 @@ object CSVUtil {
 
     val source = io.Source.fromFile(fileName)
 
-    println(s"Success. Parsing ${fileName}")
+    println(s"Success - Attempting to Parse ${fileName}")
 
     try {
       for(item <- source.getLines().drop(headers)) {
@@ -30,7 +30,7 @@ object CSVUtil {
       }
       println(s"Successfully added ${numAdditions} Contacts")
     } catch {
-      case nfe : NumberFormatException => println(s"Failed to parse ${fileName}. Include headers.")
+      case nfe : NumberFormatException => println(s"Failed to parse ${fileName} - Include headers")
     } finally {
       if (source != null) source.close()
     }

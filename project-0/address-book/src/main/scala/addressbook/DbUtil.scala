@@ -1,5 +1,6 @@
 package addressbook
 
+import org.bson.codecs.configuration.CodecConfigurationException
 import org.mongodb.scala.{Completed, MongoClient, MongoCollection, Observable, SingleObservable}
 import org.mongodb.scala.bson.codecs.Macros._
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
@@ -89,7 +90,7 @@ object DbUtil {
       println("********************************")
     } else {
       println("********************************\n")
-      println(s"${firstName} ${lastName} Not Found")
+      println(s"No Results For - ${firstName} ${lastName}")
       println("\n********************************")
     }
   }
@@ -101,7 +102,7 @@ object DbUtil {
 
     try {
       getResult(this.getContactCollection().deleteOne(equal("_id", resultSet(contactIndex)._id)))
-      println(s"Successfully deleted Result #${contactIndex + 1} : ${firstName} ${lastName}")
+      println(s"Successfully Deleted Result #${contactIndex + 1} : ${firstName} ${lastName}")
     } catch {
       case oob : IndexOutOfBoundsException => println("Invalid Contact")
     }
@@ -176,53 +177,58 @@ object DbUtil {
   }
 
   def updateAddress(contactId : ObjectId): Unit = {
-    val newAddress : Option[String] = StdIn.readLine("Address: ") match {
-      case "" => None
-      case address : String  => Option(address)
+    val newAddress : String = StdIn.readLine("Address: ") match {
+      case "" => ""
+      case address : String  => address
     }
 
-    val newCity : Option[String] = StdIn.readLine("City: ") match {
-      case "" => None
-      case city : String => Option(city)
+    val newCity : String = StdIn.readLine("City: ") match {
+      case "" => ""
+      case city : String => city
     }
 
-    var newState : Option[String] = null
+    var newState : String = null
     do {
       val input = StdIn.readLine("State: ")
       input match {
-        case input if (input.matches("""[A-Z][A-Z]""")) => newState = Option(input)
-        case "" => newState = None
+        case input if (input.matches("""[A-Z][A-Z]""")) => newState = input
+        case "" => newState = ""
         case _ => newState = null; println("Invalid State - Use Format (XX)")
       }
     } while (newState == null)
 
-    var newZip : Option[Int] = null
+    var newZip : Int = 0
     do {
       val input : String = StdIn.readLine("Zip: ")
       input match {
-        case input if (input.matches("""[0-9]{5}""")) => newZip = Option(input.toInt)
-        case "" => newZip = None
-        case _ => newZip = null; println("Invalid Zip - Must Be 5 Digits")
+        case input if (input.matches("""[0-9]{5}""")) => newZip = input.toInt
+        case "" => newZip = 1
+        case _ => newZip = 0; println("Invalid Zip - Must Be 5 Digits")
       }
-    } while (newZip == null)
+    } while (newZip == 0)
 
-
-    // TODO: Move these updateOne's to an updateMany
-    printResult(this.getContactCollection().updateOne(
+    getResult(this.getContactCollection().updateOne(
       equal("_id", contactId), set("address", newAddress)
     ))
 
-    printResult(this.getContactCollection().updateOne(
-      equal("_id", contactId), set("city", newCity),
+    getResult(this.getContactCollection().updateOne(
+      equal("_id", contactId), set("city", newCity)
     ))
 
-    printResult(this.getContactCollection().updateOne(
-      equal("_id", contactId), set("state", newState),
+    getResult(this.getContactCollection().updateOne(
+      equal("_id", contactId), set("state", newState)
     ))
 
-    printResult(this.getContactCollection().updateOne(
-      equal("_id", contactId), set("zip", newZip)
-    ))
+    if (newZip != 0 && newZip != 1){
+      getResult(this.getContactCollection().updateOne(
+        equal("_id", contactId), set("zip", newZip)
+      ))
+    }else if (newZip == 1) {
+      getResult(this.getContactCollection().updateOne(
+        equal("_id", contactId), set("zip", null)
+      ))
+    }
+
   }
 
   def updateContactByFullName(firstName: String, lastName: String) : Unit = {
@@ -254,9 +260,9 @@ object DbUtil {
         case selectedOption if (selectedOption == 3) => updatePhoneNumber(contactId)
         case selectedOption if (selectedOption == 4) => updateEmail(contactId)
         case selectedOption if (selectedOption == 5) => updateAddress(contactId)
+        case _ => println("Invalid Selection")
       }
     }
-
   }
 
 }

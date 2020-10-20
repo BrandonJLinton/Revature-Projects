@@ -38,7 +38,6 @@ object Cli {
     val nameRegex = "([A-Za-b][a-zA-Z]*)"
     val emailRegex = "(\\w+)@([\\w\\.]+)"
 
-    // TODO: Loop on firstName/lastName or it inputs blank
     var firstName : String = null
     do {
       var input = StdIn.readLine("First Name: ")
@@ -160,7 +159,13 @@ object Cli {
     val firstName : String = StdIn.readLine("First Name: ")
     val lastName : String = StdIn.readLine("Last Name: ")
 
-    DbUtil.updateContactByFullName(firstName, lastName)
+    try {
+      DbUtil.updateContactByFullName(firstName, lastName)
+    } catch {
+      case numFormat : NumberFormatException => println("Invalid Selection")
+      case oob : IndexOutOfBoundsException => println("Invalid Contact")
+    }
+
   }
 
   def menu() : Unit = {
@@ -177,7 +182,7 @@ object Cli {
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("4") => editContact()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("5") => printContact()
         case commandArgPattern(cmd, arg) if cmd.equalsIgnoreCase("exit") => continueMenuLoop = false; println("Shutting Down....")
-        case notRecognized => println(s"${notRecognized} not a recognized command")
+        case notRecognized => println(s"${notRecognized} is an invalid command")
       }
     }
   }
