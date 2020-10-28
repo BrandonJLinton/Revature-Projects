@@ -108,7 +108,7 @@ object Cli {
     DbUtil.insertContact(newContact)
 
     println("********************************")
-    println("Successful Added Contact")
+    println("Successfully Added Contact")
   }
 
   def importCSV() : Unit = {
